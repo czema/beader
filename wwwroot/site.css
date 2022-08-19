@@ -1,15 +1,15 @@
 ﻿* { user-select: none; }
-
+html { font-family: monospace; }
 body { display: flex; flex-direction: column; }
 
 div.container { display: flex; }
 
-input#title { margin-bottom: 8px; font-size: 16px; }
+input#title { margin-bottom: 8px; font-size: 18px; }
 
 .toolbar { margin-right: 12px; display: flex; flex-direction: column; }
 .toolbar > input { height: 40px; margin-bottom: 8px; }
 
 table#grid { border-collapse: collapse; }
 table#grid td { margin: 0; padding: 0; text-align: center; }
-table#grid div { width: 15px; height: 14px; }
-table#grid div.bead { border-radius: 19px; border: 0.01cm solid #000; box-shadow: 0 0 0 8px inset; color: #FFF; }
+table#grid div { width: 15px; height: 15px; }
+table#grid div.bead { border-radius: 10px; border: 1px solid #444; box-shadow: 0 0 0 10px inset; color: #FFF; }
