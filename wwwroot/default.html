@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Bead Grid</title>
+    <link rel="stylesheet" href="site.css" />
+</head>
+<body>
+    <input type="text" id="title" placeholder="Untitled" />
+    <div class="container">
+        <header class="toolbar">
+            <input type="color" id="swatch" list="colors" title="Click to Color" />
+            <input type="color" id="swatch2" list="colors" title="Alt+Click to Color" />
+            <input type="color" id="swatch3" list="colors" value="#FFFFFF" title="Clear" />
+            <input type="button" id="rotate" value="Rotate" />
+            <input type="button" id="print" value="Print" />
+            <datalist id="colors">
+                <option value="#FFFFFF">White</option>
+                <option value="#000000">Black</option>
+                <option value="#FF0000">Red</option>
+                <option value="#00FF00">Green</option>
+                <option value="#0000FF">Blue</option>
+                <option value="#00FFFF">Yellow</option>
+                <option value="#FF00FF">Purple</option>
+                <option value="#A9931F">Brown</option>
+            </datalist>
+        </header>
+
+        <table id="grid" />
+    </div>
+
+    <script src="cookies.js"></script>
+    <script src="grid.js"></script>
+</body>
+</html>
