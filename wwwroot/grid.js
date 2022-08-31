@@ -10,6 +10,11 @@ const printButton = document.querySelector("#print");
 swatch.value = getCookie("swatch1");
 swatch2.value = getCookie("swatch2");
 
+titleInput.addEventListener("blur", $evt => {
+    // Immediately force a save when title is blurred.
+    save();
+});
+
 swatch.addEventListener("change", $evt => {
     setCookie("swatch1", $evt.target.value, 30);
 });
@@ -43,33 +48,7 @@ printButton.addEventListener("click", $evt => {
         return;
     }
 
-    const rgba2hex = (rgba) => `#${rgba.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+\.{0,1}\d*))?\)$/).slice(1).map((n, i) => (i === 3 ? Math.round(parseFloat(n) * 255) : parseFloat(n)).toString(16).padStart(2, '0').replace('NaN', '')).join('')}`
-
-    const beads = document.querySelectorAll("div.bead", table);
-    const dict = {};
-    beads.forEach(b => {
-        const color = b.style.color;
-        const row = parseInt(b.dataset.row, 10);
-        const col = parseInt(b.dataset.col, 10);
-        const idx = (row * MAX_COLUMNS) + col;
-        if (color === "") {
-            dict[idx] = "#FFFFFF";
-        } else {
-            dict[idx] = rgba2hex(color);
-        }
-    });
-
-    const data = {
-        title: titleInput.value || null,
-        width: MAX_COLUMNS,
-        beads: []
-    };
-    for (let i = 0; i < MAX_ROWS; i++) {
-        for (let j = 0; j < MAX_COLUMNS; j++) {
-            const idx = (i * MAX_COLUMNS) + j;
-            data.beads.push(dict[idx]);
-        }
-    }
+    const data = toData();
 
     const str = JSON.stringify(data);
 
@@ -135,67 +114,11 @@ const onBeadMove = $evt => {
     }
 };
 
-const onMoveDown = $evt => {
-    // Get all divs in this row, replace the row below with matching color.
-    const row = +$evt.target.dataset.row;
-    let target_row = row + 1;
-    if (target_row > MAX_ROWS - 1) target_row = 0;
-
-    const src = document.querySelectorAll("div.bead[data-row='" + row + "']", table);
-    const dst = document.querySelectorAll("div.bead[data-row='" + target_row + "']", table);
-
-    const dict = {};
-    src.forEach(s => dict[s.dataset.col] = s.style.color);
-    dst.forEach(d => d.style.color = dict[d.dataset.col]);
-};
-
-const onMoveUp = $evt => {
-    // Get all divs in this row, replace the row below with matching color.
-    const row = +$evt.target.dataset.row;
-    let target_row = row - 1;
-    if (target_row < 0) target_row = MAX_ROWS - 1;
-
-    const src = document.querySelectorAll("div.bead[data-row='" + row + "']", table);
-    const dst = document.querySelectorAll("div.bead[data-row='" + target_row + "']", table);
-
-    const dict = {};
-    src.forEach(s => dict[s.dataset.col] = s.style.color);
-    dst.forEach(d => d.style.color = dict[d.dataset.col]);
-};
-
-const onMoveRight = $evt => {
-    // Get all divs in this column, replace the column to the right with matching color.
-    const col = +$evt.target.dataset.col;
-    let target_col = col + 1;
-    if (target_col > MAX_COLUMNS - 1) target_col = 0;
-
-    const src = document.querySelectorAll("div.bead[data-col='" + col + "']", table);
-    const dst = document.querySelectorAll("div.bead[data-col='" + target_col + "']", table);
-
-    const dict = {};
-    src.forEach(s => dict[s.dataset.row] = s.style.color);
-    dst.forEach(d => d.style.color = dict[d.dataset.row]);
-};
-
-const onMoveLeft = $evt => {
-    // Get all divs in this column, replace the column to the left with matching color.
-    const col = +$evt.target.dataset.col;
-    let target_col = col - 1;
-    if (target_col < 0) target_col = MAX_COLUMNS - 1;
-
-    const src = document.querySelectorAll("div.bead[data-col='" + col + "']", table);
-    const dst = document.querySelectorAll("div.bead[data-col='" + target_col + "']", table);
-
-    const dict = {};
-    src.forEach(s => dict[s.dataset.row] = s.style.color);
-    dst.forEach(d => d.style.color = dict[d.dataset.row]);
-};
-
 let MAX_ROWS = 50;
 let MAX_COLUMNS = 40;
 const table = document.querySelector("#grid");
 
-const render = () => {
+const render = (beads) => {
     table.innerHTML = ""; // Clear contents.
 
     for (let i = 0; i < MAX_ROWS; i++) {
@@ -209,82 +132,77 @@ const render = () => {
             const div = document.createElement("div");
             td.appendChild(div);
 
+            div.addEventListener("click", onBeadClick);
+            div.addEventListener("mousemove", onBeadMove);
+
             div.className = "bead";
             div.dataset.row = i;
             div.dataset.col = j;
 
-            div.addEventListener("click", onBeadClick);
-            div.addEventListener("mousemove", onBeadMove);
-        }
-
-        {
-            // Move up.
-            let td = document.createElement("td");
-            tr.appendChild(td);
-
-            let div = document.createElement("div");
-            td.appendChild(div);
-
-            div.className = "move up";
-            div.dataset.row = i;
-            div.textContent = "^";
-
-            div.addEventListener("click", onMoveUp);
-        }
-
-        {
-            // Move down.
-            let td = document.createElement("td");
-            tr.appendChild(td);
-
-            let div = document.createElement("div");
-            td.appendChild(div);
-
-            div.className = "move down";
-            div.dataset.row = i;
-            div.textContent = "V";
-
-            div.addEventListener("click", onMoveDown);
+            const idx = (i * MAX_COLUMNS) + j;
+            const color = (beads && beads[idx]) || "#FFFFFF";
+            div.style.color = color;
         }
     }
+};
 
-    {
-        const tr = document.createElement("tr");
-        table.appendChild(tr);
+const toData = () => {
 
+    const rgba2hex = (rgba) => `#${rgba.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+\.{0,1}\d*))?\)$/).slice(1).map((n, i) => (i === 3 ? Math.round(parseFloat(n) * 255) : parseFloat(n)).toString(16).padStart(2, '0').replace('NaN', '')).join('')}`
+
+    const beads = document.querySelectorAll("div.bead", table);
+    const dict = {};
+    beads.forEach(b => {
+        const color = b.style.color;
+        const row = parseInt(b.dataset.row, 10);
+        const col = parseInt(b.dataset.col, 10);
+        const idx = (row * MAX_COLUMNS) + col;
+        if (color === "") {
+            dict[idx] = "#FFFFFF";
+        } else {
+            dict[idx] = rgba2hex(color);
+        }
+    });
+
+    const data = {
+        title: titleInput.value || null,
+        width: MAX_COLUMNS,
+        height: MAX_ROWS,
+        beads: []
+    };
+
+    for (let i = 0; i < MAX_ROWS; i++) {
         for (let j = 0; j < MAX_COLUMNS; j++) {
-            const td = document.createElement("td");
-            tr.appendChild(td);
-
-            const div = document.createElement("div");
-            td.appendChild(div);
-
-            div.className = "move right";
-            div.dataset.col = j;
-            div.textContent = ">";
-
-            div.addEventListener("click", onMoveRight);
+            const idx = (i * MAX_COLUMNS) + j;
+            data.beads.push(dict[idx]);
         }
     }
 
-    {
-        const tr = document.createElement("tr");
-        table.appendChild(tr);
+    return data;
+};
 
-        for (let j = 0; j < MAX_COLUMNS; j++) {
-            const td = document.createElement("td");
-            tr.appendChild(td);
+const save = () => {
+    // Save to local storage.
+    const data = toData();
 
-            const div = document.createElement("div");
-            td.appendChild(div);
+    window.localStorage.setItem("data", JSON.stringify(data));
+};
 
-            div.className = "move left";
-            div.dataset.col = j;
-            div.textContent = "<";
+window.setInterval(save, 10 * 1000); // Automatically save every 10 seconds.
 
-            div.addEventListener("click", onMoveLeft);
-        }
+(() => {
+    // See if there is saved data in local storage.
+    const str = window.localStorage.getItem("data");
+
+    if (str) {
+        const data = JSON.parse(str);
+
+        titleInput.value = data.title;
+        MAX_ROWS = data.height;
+        MAX_COLUMNS = data.width;
+
+        render(data.beads);
+    } else {
+        render();
     }
-}
-
-render();
+})();
