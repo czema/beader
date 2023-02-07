@@ -115,7 +115,6 @@ namespace Beader.Controllers {
 
                         var ordered = list.OrderByDescending(x => x.count).Take(25);
 
-                        const int marginSize = 6;
                         int idx = 0;
                         var gridWidth = RADIUS * 2 * COLS;
                         var gridHeight = (RADIUS * 2 * data.height) + 2;

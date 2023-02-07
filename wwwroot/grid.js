@@ -376,7 +376,6 @@ canvas.addEventListener('mousemove', event => {
 });
 
 const save = () => {
-   return;
    data.title = titleInput.value || null;
 
    // Save to local storage.
