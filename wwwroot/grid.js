@@ -2,6 +2,7 @@
 
 let data = {
    title: "",
+   right_title: "etsy.com/shop/SuperBeadShop",
    width: 40,
    height: 50,
    beads: new Array(50 * 40).fill("#ffffff")

@@ -67,7 +67,7 @@ namespace Beader.Controllers {
 
                         // Put the title and date/time at the top of the document.
                         canvas.DrawText(data.title ?? "Untitled", 0, -10, text_paint);
-                        string rightHeaderText = "etsy.com/shop/SuperBeadShop";
+                        string rightHeaderText = data.right_title ?? "etsy.com/shop/SuperBeadShop";
                         float rightHeaderTextWidth = text_paint.MeasureText(rightHeaderText);
                         canvas.DrawText(rightHeaderText, size.Width - rightHeaderTextWidth, -10, text_paint);
 
@@ -171,6 +171,7 @@ namespace Beader.Controllers {
 
         private record Data {
             public string? title { get; init; }
+            public string? right_title { get; init; }
             public int width { get; init; }
             public int height { get; init; }
             public IEnumerable<string> beads { get; init; } = default!;
