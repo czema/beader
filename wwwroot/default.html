@@ -6,9 +6,13 @@
    <link rel="stylesheet" href="site.css" />
 </head>
 <body>
-   <input type="text" id="title" placeholder="Untitled" />
+   <header>
+      <input type="text" id="title" placeholder="Title" />
+      <input type="text" id="right_title" placeholder="Sub Title" />
+   </header>
+   
    <div class="container">
-      <header class="toolbar">
+      <aside>
          Click Color
          <input type="color" id="swatch" list="colors" title="Click to Color" />
          Alt+Click&nbsp;Color
@@ -17,6 +21,8 @@
          <input type="color" id="swatch3" list="colors" value="#FFFFFF" title="Clear" />
          <input type="button" id="rotate" value="Rotate" />
          <input type="button" id="print" value="Print" />
+         <input type="button" id="save" value="Save" />
+         <input type="button" id="load" value="Load" />
          <datalist id="colors">
             <option value="#FFFFFF" title="White"></option>
             <option value="#FFF6E9" title="Vanilla"></option>
@@ -57,7 +63,7 @@
             <option value="#CC44EE" title="Light Purple"></option>
             <option value="#A119C3" title="Purple"></option>
          </datalist>
-      </header>
+      </aside>
 
       <div style="width:100%;height:100%;">
          <canvas width="642" height="825"></canvas>

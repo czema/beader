@@ -65,9 +65,28 @@ namespace Beader.Controllers {
                             IsAntialias = true
                         };
 
+                        using var small_text_paint_white = new SkiaSharp.SKPaint
+                        {
+                            Color = SkiaSharp.SKColor.Parse("#ffffff"),
+                            IsStroke = false,
+                            TextSize = 10f,
+                            IsAntialias = true,
+                            TextAlign = SkiaSharp.SKTextAlign.Center
+                        };
+
+                        using var small_text_paint_bold = new SkiaSharp.SKPaint
+                        {
+                            Color = SkiaSharp.SKColor.Parse("#222222"),
+                            IsStroke = false,
+                            TextSize = 10f,
+                            IsAntialias = true,
+                            FakeBoldText = true,
+                            TextAlign = SkiaSharp.SKTextAlign.Center
+                        };
+
                         // Put the title and date/time at the top of the document.
                         canvas.DrawText(data.title ?? "Untitled", 0, -10, text_paint);
-                        string rightHeaderText = data.right_title ?? "etsy.com/shop/SuperBeadShop";
+                        string rightHeaderText = data.right_title ?? "";
                         float rightHeaderTextWidth = text_paint.MeasureText(rightHeaderText);
                         canvas.DrawText(rightHeaderText, size.Width - rightHeaderTextWidth, -10, text_paint);
 
@@ -90,7 +109,12 @@ namespace Beader.Controllers {
                             cy += RADIUS;
 
                             canvas.DrawCircle(cx, cy, RADIUS, paint);
-                            canvas.DrawCircle(cx, cy, RADIUS, empty_circle); // Black circle around every location.
+
+                            if (String.Equals(color, "#ffffff", StringComparison.OrdinalIgnoreCase)) {
+                                // Black circle around every location.
+                                // Only if the location is empty.
+                                canvas.DrawCircle(cx, cy, RADIUS, empty_circle);
+                            }
 
                             i++;
                             if (i == COLS) {
@@ -139,18 +163,10 @@ namespace Beader.Controllers {
 
                             canvas.DrawCircle(x, y, RADIUS * 1.5f, paint);
 
-                            // Draw the number of beads inside the circle.
-                            //ctx.font = "12px sans-serif";
-                            //const tm = ctx.measureText(obj.count);
-                            //const tw = tm.width;
-                            //const th = tm.actualBoundingBoxAscent + tm.actualBoundingBoxDescent;
-                            //ctx.fillStyle = '#000000';
-                            //ctx.shadowColor = '#000000AA';
-                            //ctx.shadowBlur = 3;
-                            //ctx.strokeText(obj.count, x - (tw / 2), y + (th / 2));
-                            //ctx.fillStyle = '#ffffff';
-                            //ctx.shadowBlur = 0;
-                            //ctx.fillText(obj.count, x - (tw / 2), y + (th / 2));
+                            var text = count.ToString();
+                            canvas.DrawText(text, x - 0.5f, y + 4.5f, small_text_paint_bold);
+                            canvas.DrawText(text, x, y + 4f, small_text_paint_white);
+
                             idx++;
                         }
                     });

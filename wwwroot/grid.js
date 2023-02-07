@@ -21,7 +21,7 @@ const ui = {
    inCircle: (x, y, xCircle, yCircle, radius) => ((x - xCircle) * (x - xCircle)
       + (y - yCircle) * (y - yCircle) <= radius * radius),
    inCircleRect: (x, y, xCircle, yCircle, radius) =>
-      (x > (xCircle - radius)
+   (x > (xCircle - radius)
       && x < (xCircle + radius)
       && y > (yCircle - radius)
       && y < (yCircle + radius))
@@ -31,11 +31,14 @@ const beadSize = 16;
 const marginSize = 16;
 
 const titleInput = document.querySelector("#title");
+const rightTitleInput = document.querySelector("#right_title");
 const swatch = document.querySelector("#swatch");
 const swatch2 = document.querySelector("#swatch2");
 const swatch3 = document.querySelector("#swatch3");
 const rotateButton = document.querySelector("#rotate");
 const printButton = document.querySelector("#print");
+const saveButton = document.querySelector("#save");
+const loadButton = document.querySelector("#load");
 
 swatch.value = getCookie("swatch1");
 swatch2.value = getCookie("swatch2");
@@ -43,6 +46,10 @@ swatch2.value = getCookie("swatch2");
 titleInput.addEventListener("blur", () => {
    // Immediately force a save when title is blurred.
    save();
+});
+
+rightTitleInput.addEventListener("blur", $evt => {
+   data.right_title = $evt.target.value;
 });
 
 swatch.addEventListener("change", $evt => {
@@ -101,6 +108,57 @@ printButton.addEventListener("click", () => {
    body.appendChild(frm);
    frm.submit();
    body.removeChild(frm);
+});
+
+saveButton.addEventListener("click", () => {
+   var str = JSON.stringify(data, null, '   ');
+   var blob = new Blob([str], { type: 'application/json;charset=utf-8' });
+   var url = window.URL.createObjectURL(blob);
+
+   var a = document.createElement('a');
+   document.body.appendChild(a);
+   a.style = 'display:none;';
+   a.href = url;
+   a.download = data.title;
+   a.click();
+
+   window.URL.revokeObjectURL(url);
+   document.body.removeChild(a);
+});
+
+loadButton.addEventListener("click", () => {
+   // Create a input[type=file], attach an onchange event, and then click it.
+   var a = document.createElement('input');
+   document.body.appendChild(a);
+   a.style = "visibility:hidden;width:0px;position:absolute;top:0";
+   a.type = 'file';
+   a.onchange = function (a) {
+      var b = a.currentTarget;
+      b.parentNode.removeChild(b);
+
+      var reader = new FileReader();
+      reader.onload = function (c) {
+         var text = reader.result;
+         var obj = JSON.parse(text, function (key, value) {
+            let a;
+            if (typeof value === 'string') {
+               // Detect if this is an ISO date and if so convert it to an actual date.
+               a = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
+               if (a) {
+                  return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4], +a[5], +a[6]));
+               }
+            }
+            return value;
+         });
+
+         data = obj;
+
+         titleInput.value = data.title;
+         rightTitleInput.value = data.right_title;
+      };
+      reader.readAsText(b.files[0]);
+   };
+   a.click();
 });
 
 const canvas = document.querySelector('canvas');
@@ -376,8 +434,9 @@ canvas.addEventListener('mousemove', event => {
    }
 });
 
-const save = () => {
+const autoSave = () => {
    data.title = titleInput.value || null;
+   data.right_title = rightTitleInput.value || null;
 
    // Save to local storage.
    window.localStorage.setItem("data", JSON.stringify(data));
@@ -400,5 +459,5 @@ const save = () => {
    // Begin.
    resize();
    requestAnimationFrame(render);
-   window.setInterval(save, 10 * 1000); // Automatically save every 10 seconds.
+   window.setInterval(autoSave, 10 * 1000); // Automatically save every 10 seconds.
 })();

@@ -1,16 +1,14 @@
-﻿* { user-select: none; }
-html { font-family: monospace; }
+﻿html { font-family: monospace; }
 body { display: flex; flex-direction: column; padding:0px;margin:0px;}
 
-div.container { display: flex; width: 100vw; height: calc(100vh - 48px); }
-div.container canvas { width: 100%; height: 100%; }
+header {display:flex;justify-content:space-between;}
+header input {}
+input#title { margin:10px; margin-bottom: 8px; font-size: 20px; width:100%; }
+input#right_title { margin:10px; margin-bottom: 8px; font-size: 20px; width:100%; }
 
-input#title { margin:10px; margin-bottom: 8px; font-size: 18px; }
+div.container { display: flex; width: 100vw; height: calc(100vh - 50px); }
 
-.toolbar { margin:0 12px; display: flex; flex-direction: column; }
-.toolbar > input { height: 40px; margin-bottom: 8px; }
+aside { margin:0 12px; display: flex; flex-direction: column; }
+aside > input { height: 40px; margin-bottom: 8px; }
 
-table#grid { border-collapse: collapse; }
-table#grid td { margin: 0; padding: 0; text-align: center; }
-table#grid div { width: 15px; height: 15px; }
-table#grid div.bead { border-radius: 10px; border: 1px solid #444; box-shadow: 0 0 0 10px inset; color: #FFF; }
+canvas { width: 100%; height: 100%; }
