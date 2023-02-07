@@ -14,6 +14,7 @@ const ui = {
    borderRight: [],
    borderBottom: [],
    borderLeft: [],
+   legendActive: null,
    legend: [],
    inRect: (x, y, xRect, yRect, w, h) =>
    (x > xRect && x < xRect + w
@@ -44,6 +45,8 @@ swatch.value = getCookie("swatch1");
 swatch2.value = getCookie("swatch2");
 
 titleInput.addEventListener("blur", () => {
+   data.title = $evt.target.value;
+
    // Immediately force a save when title is blurred.
    save();
 });
@@ -96,8 +99,7 @@ printButton.addEventListener("click", () => {
    const frm = document.createElement('FORM');
    frm.action = "generate";
    frm.method = 'POST';
-   let newWindow = true; // This just provides a spot for debugging.
-   if (newWindow) frm.target = '_blank';
+   frm.target = '_blank';
 
    const input = document.createElement('INPUT');
    input.name = "data";
@@ -286,7 +288,8 @@ const render = () => {
    requestAnimationFrame(render);
 }
 
-const checkBorder = () => {
+// When the border is clicked.
+const clickBorder = () => {
    switch (ui.borderActive) {
       case 1:
          for (let i = 0; i < data.width; i++) {
@@ -317,7 +320,8 @@ const checkBorder = () => {
    }
 }
 
-const checkKey = event => {
+// When a legend color is clicked.
+const clickLegend = event => {
    if (ui.legendActive) {
       if (event.shiftKey) {
          const input = document.createElement('INPUT');
@@ -350,7 +354,8 @@ const checkKey = event => {
    }
 }
 
-const checkBead = event => {
+// When a bead is clicked.  Note that beads are automatically clicked on mouse move.
+const clickBead = event => {
    const x = event.pageX - canvasLeft - marginSize;
    const y = event.pageY - canvasTop - marginSize;
 
@@ -377,8 +382,9 @@ const checkBead = event => {
    data.beads[idx] = color;
 }
 
+// Determine what UI element the mouse is over.
 const hitDetection = event => {
-   // Determine where the mouse is.
+   // Determine where the mouse is, relative to the canvas.
    const x = event.pageX - canvasLeft;
    const y = event.pageY - canvasTop;
 
@@ -398,7 +404,7 @@ const hitDetection = event => {
    ui.legendActive = "";
    ui.legend.forEach(l => {
       if (ui.inCircleRect(x, y, l[0], l[1], l[2] + 0.5)) {
-         ui.legendActive = l[3];
+         ui.legendActive = l[3]; // Store the color.
       }
    });
 
@@ -411,6 +417,7 @@ const hitDetection = event => {
    return true;
 };
 
+// Set the canvas size to match its parent size when the window is resized.
 const resize = () => {
    canvas.width = canvas.parentElement.clientWidth;
    canvas.height = canvas.parentElement.clientHeight;
@@ -421,29 +428,27 @@ window.addEventListener('resize', resize);
 window.addEventListener('mousedown', event => {
    mouseActive = true;
    if (hitDetection(event)) {
-      checkBorder(event);
-      checkKey(event);
-      checkBead(event);
+      clickBorder(event);
+      clickLegend(event);
+      clickBead(event);
    }
 });
 
 window.addEventListener('mouseup', () => mouseActive = false);
 canvas.addEventListener('mousemove', event => {
    if (hitDetection(event)) {
-      checkBead(event);
+      clickBead(event);
    }
 });
 
+// Serialize the data and store in local storage.
 const autoSave = () => {
    data.title = titleInput.value || null;
    data.right_title = rightTitleInput.value || null;
 
    // Save to local storage.
    window.localStorage.setItem("data", JSON.stringify(data));
-
-   console.log("Saved.");
 };
-
 
 // Init.
 (() => {
@@ -453,7 +458,8 @@ const autoSave = () => {
    if (str) {
       data = JSON.parse(str);
 
-      titleInput.value = data.title;
+      titleInput.value = data.title || "";
+      rightTitleInput.value = data.right_title || "";
    }
 
    // Begin.
