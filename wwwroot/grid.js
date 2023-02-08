@@ -441,8 +441,8 @@ const mouseMove = event => {
 };
 
 window.addEventListener('resize', resize);
-window.addEventListener('mousedown', mousedown);
-window.addEventListener('touchstart', mousedown);
+window.addEventListener('mousedown', mouseDown);
+window.addEventListener('touchstart', mouseDown);
 window.addEventListener('mouseup', mouseUp);
 window.addEventListener('touchend', mouseUp);
 canvas.addEventListener('mousemove', mouseMove);
