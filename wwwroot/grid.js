@@ -423,23 +423,30 @@ const resize = () => {
    canvas.height = canvas.parentElement.clientHeight;
 };
 
-window.addEventListener('resize', resize);
-
-window.addEventListener('mousedown', event => {
+const mouseDown = event => {
    mouseActive = true;
    if (hitDetection(event)) {
       clickBorder(event);
       clickLegend(event);
       clickBead(event);
    }
-});
+};
 
-window.addEventListener('mouseup', () => mouseActive = false);
-canvas.addEventListener('mousemove', event => {
+const mouseUp = () => mouseActive = false;
+
+const mouseMove = event => {
    if (hitDetection(event)) {
       clickBead(event);
    }
-});
+};
+
+window.addEventListener('resize', resize);
+window.addEventListener('mousedown', mousedown);
+window.addEventListener('touchstart', mousedown);
+window.addEventListener('mouseup', mouseUp);
+window.addEventListener('touchend', mouseUp);
+canvas.addEventListener('mousemove', mouseMove);
+canvas.addEventListener('touchmove', mouseMove);
 
 // Serialize the data and store in local storage.
 const autoSave = () => {
