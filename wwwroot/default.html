@@ -4,13 +4,20 @@
    <meta charset="utf-8" />
    <title>Bead Grid</title>
    <link rel="stylesheet" href="site.css" />
+   <link href="/assets/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+   <link href="/assets/fontawesome/css/solid.min.css" rel="stylesheet">
 </head>
 <body>
    <header>
+      Beader
+      <i class="fa-solid fa-eye"></i>
+   </header>
+
+   <div class="titles">
       <input type="text" id="title" placeholder="Title" />
       <input type="text" id="right_title" placeholder="Sub Title" />
-   </header>
-   
+   </div>
+
    <div class="container">
       <aside>
          Click Color
@@ -19,10 +26,18 @@
          <input type="color" id="swatch2" list="colors" title="Alt+Click to Color" />
          Clear Canvas
          <input type="color" id="swatch3" list="colors" value="#FFFFFF" title="Clear" />
-         <input type="button" id="rotate" value="Rotate" />
-         <input type="button" id="print" value="Print" />
-         <input type="button" id="save" value="Save" />
-         <input type="button" id="load" value="Load" />
+         <button type="button" id="rotate">
+            <i class="fa-solid fa-rotate fa-2x"></i>
+         </button>
+         <button type="button" id="print">
+            <i class="fa-solid fa-print fa-2x"></i>
+         </button>
+         <button type="button" id="save">
+            <i class="fa-solid fa-floppy-disk fa-2x"></i>
+         </button>
+         <button type="button" id="load">
+            <i class="fa-solid fa-folder-open fa-2x"></i>
+         </button>
          <datalist id="colors">
             <option value="#FFFFFF" title="White"></option>
             <option value="#FFF6E9" title="Vanilla"></option>

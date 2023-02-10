@@ -14,6 +14,7 @@ const ui = {
    borderRight: [],
    borderBottom: [],
    borderLeft: [],
+   beadLocations: [],
    legendActive: null,
    legend: [],
    inRect: (x, y, xRect, yRect, w, h) =>
@@ -28,9 +29,6 @@ const ui = {
       && y < (yCircle + radius))
 };
 
-const beadSize = 16;
-const marginSize = 16;
-
 const titleInput = document.querySelector("#title");
 const rightTitleInput = document.querySelector("#right_title");
 const swatch = document.querySelector("#swatch");
@@ -44,11 +42,11 @@ const loadButton = document.querySelector("#load");
 swatch.value = getCookie("swatch1");
 swatch2.value = getCookie("swatch2");
 
-titleInput.addEventListener("blur", () => {
+titleInput.addEventListener("blur", $evt => {
    data.title = $evt.target.value;
 
    // Immediately force a save when title is blurred.
-   save();
+   autoSave();
 });
 
 rightTitleInput.addEventListener("blur", $evt => {
@@ -171,13 +169,55 @@ let mouseActive = false;
 const ctx = canvas.getContext('2d');
 ctx.translate(0.5, 0.5);
 
+const computeSizes = () => {
+   const marginSize = 16;
+
+   // Determine the bead size.  Remove the margin width/height and legend size from the canvas.
+   let legendWidth = 0;
+   let legendHeight = 0;
+   let legendOrientation = -1;
+   let beadSize = 0;
+   let gridWidth = 0;
+   let gridHeight = 0;
+
+   // This will be run twice.
+   // The first time to get the general orientation so we know where to place the legend.
+   // The second time the legend size is known, recompute to take that into account.
+   for (let i = 0; i < 2; i++) {
+      let maxBeadAreaX = canvas.width - (marginSize * 2) - legendWidth - 4;
+      let maxBeadAreaY = canvas.height - (marginSize * 2) - legendHeight - 4;
+      let scaleX = maxBeadAreaX / data.width;
+      let scaleY = maxBeadAreaY / data.height;
+      let minScale = Math.min(scaleX, scaleY);
+
+      beadSize = minScale;
+      gridWidth = beadSize * data.width;
+      gridHeight = (beadSize * data.height) + 2;
+
+      let diffX = maxBeadAreaX - gridWidth;
+      let diffY = maxBeadAreaY - gridHeight;
+
+      // 0 is horizontal (along side), 1 is vertical (along bottom).
+      if (legendOrientation === -1) {
+         if (diffX > diffY) {
+            legendOrientation = 1;
+            legendWidth = beadSize * 2.5;
+         } else {
+            legendOrientation = 0;
+            legendHeight = beadSize * 2.5;
+         }
+      }
+   }
+
+   return { beadSize, gridWidth, gridHeight, marginSize, legendOrientation };
+};
+
 const render = () => {
    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-   // Movement borders.
-   const gridWidth = beadSize * data.width;
-   const gridHeight = (beadSize * data.height) + 2;
+   const { beadSize, gridWidth, gridHeight, marginSize, legendOrientation } = computeSizes();
 
+   // Movement borders.
    ui.borderTop = [marginSize, 0, gridWidth, marginSize];
    ui.borderRight = [gridWidth + marginSize, marginSize, marginSize, gridHeight];
    ui.borderBottom = [marginSize, gridHeight + marginSize, gridWidth, marginSize];
@@ -194,6 +234,7 @@ const render = () => {
 
    // Beads.
    ctx.globalAlpha = 1;
+   ui.beadLocations = [];
    for (let j = 0; j < data.height; j++) {
       for (let i = 0; i < data.width; i++) {
          const idx = (j * data.width) + i;
@@ -208,6 +249,8 @@ const render = () => {
 
          const x = (i * beadSize) + (beadSize / 2) + marginSize;
          const y = (j * beadSize) + (beadSize / 2) + 1 + marginSize;
+
+         ui.beadLocations.push({ x: x, y: y, radius: beadSize / 2, idx: idx });
 
          ctx.beginPath();
          ctx.arc(x, y, beadSize / 2, 0, Math.PI * 2);
@@ -252,10 +295,12 @@ const render = () => {
    ordered.forEach((obj, idx) => {
       let x = 0, y = 0;
 
-      if (data.width > data.height) {
+      if (legendOrientation === 0) {
+         // Along the bottom, horizontally.
          x = (idx * beadSize * 2) + (beadSize) + marginSize;
          y = gridHeight + (marginSize * 2) + (beadSize) + 4;
       } else {
+         // Along the size, vertically.
          x = gridWidth + (marginSize * 2) + (beadSize) + 6;
          y = (idx * beadSize * 2) + (beadSize) + marginSize;
       }
@@ -356,17 +401,21 @@ const clickLegend = event => {
 
 // When a bead is clicked.  Note that beads are automatically clicked on mouse move.
 const clickBead = event => {
-   const x = event.pageX - canvasLeft - marginSize;
-   const y = event.pageY - canvasTop - marginSize;
+   const x = event.pageX - canvasLeft;
+   const y = event.pageY - canvasTop;
 
    if (x < 0 || y < 0) return;
-   if (x > (data.width * 16) - 1) return;
-   if (y > (data.height * 16) - 1) return;
+   
+   // Search all beads to see which one, if any, is under the mouse.
+   let idx = -1;
+   ui.beadLocations.some(bl => {
+      if (ui.inCircleRect(x, y, bl.x, bl.y, bl.radius)) {
+         idx = bl.idx;
+         return true;
+      }
+   });
 
-   // Given the geometry of the beads, determine which one was clicked.
-   const cX = Math.round((x - 8) / 16);
-   const cY = Math.round((y - 9) / 16);
-   const idx = (cY * data.width) + cX;
+   if (idx === -1) return; // No bead found.
 
    let color = '#ffffff';
    if (event.ctrlKey) {
@@ -464,10 +513,10 @@ const autoSave = () => {
 
    if (str) {
       data = JSON.parse(str);
-
-      titleInput.value = data.title || "";
-      rightTitleInput.value = data.right_title || "";
    }
+
+   titleInput.value = data.title || "";
+   rightTitleInput.value = data.right_title || "";
 
    // Begin.
    resize();

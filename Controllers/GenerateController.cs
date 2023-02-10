@@ -85,7 +85,7 @@ namespace Beader.Controllers {
                         };
 
                         // Put the title and date/time at the top of the document.
-                        canvas.DrawText(data.title ?? "Untitled", 0, -10, text_paint);
+                        canvas.DrawText(data.title ?? "", 0, -10, text_paint);
                         string rightHeaderText = data.right_title ?? "";
                         float rightHeaderTextWidth = text_paint.MeasureText(rightHeaderText);
                         canvas.DrawText(rightHeaderText, size.Width - rightHeaderTextWidth, -10, text_paint);
