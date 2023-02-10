@@ -401,8 +401,17 @@ const clickLegend = event => {
 
 // When a bead is clicked.  Note that beads are automatically clicked on mouse move.
 const clickBead = event => {
-   const x = event.pageX - canvasLeft;
-   const y = event.pageY - canvasTop;
+   // Determine where the mouse is, relative to the canvas.
+   let mouseX = event.pageX;
+   let mouseY = event.pageY;
+
+   if (Number.isNaN(mouseX)) {
+      mouseX = event.touches[0].pageX;
+      mouseY = event.touches[0].pageY;
+   }
+
+   const x = mouseX - canvasLeft;
+   const y = mouseY - canvasTop;
 
    if (x < 0 || y < 0) return;
    
@@ -434,8 +443,16 @@ const clickBead = event => {
 // Determine what UI element the mouse is over.
 const hitDetection = event => {
    // Determine where the mouse is, relative to the canvas.
-   const x = event.pageX - canvasLeft;
-   const y = event.pageY - canvasTop;
+   let mouseX = event.pageX;
+   let mouseY = event.pageY;
+
+   if (Number.isNaN(mouseX)) {
+      mouseX = event.touches[0].pageX;
+      mouseY = event.touches[0].pageY;
+   }
+
+   const x = mouseX - canvasLeft;
+   const y = mouseY - canvasTop;
 
    // Is it over the borders?
    ui.borderActive = 0;
