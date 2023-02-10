@@ -475,7 +475,7 @@ const hitDetection = event => {
    });
 
    if (!mouseActive) return;
-   if (!event.buttons) {
+   if (!event.buttons && !event.touches) {
       mouseActive = false;
       return false; // No longer being held down.
    }
