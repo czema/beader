@@ -5,10 +5,14 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
+using SkiaSharp;
+
 namespace Beader.Controllers {
     [ApiController]
     [Route("[controller]")]
     public class GenerateController : ControllerBase {
+
+        private Random rnd = Random.Shared;
 
         public GenerateController() { }
 
@@ -49,39 +53,39 @@ namespace Beader.Controllers {
 
                     page.Content().Container().Canvas((canvas, size) => {
                         // Pre-create standard brushes.
-                        using var empty_circle = new SkiaSharp.SKPaint
+                        using var empty_circle = new SKPaint
                         {
-                            Color = SkiaSharp.SKColor.Parse("#000000"),
+                            Color = SKColor.Parse("#000000"),
                             IsStroke = true,
                             StrokeWidth = STROKE,
                             IsAntialias = true
                         };
 
-                        using var text_paint = new SkiaSharp.SKPaint
+                        using var text_paint = new SKPaint
                         {
-                            Color = SkiaSharp.SKColor.Parse("#000000"),
+                            Color = SKColor.Parse("#000000"),
                             IsStroke = false,
                             TextSize = 14,
                             IsAntialias = true
                         };
 
-                        using var small_text_paint_white = new SkiaSharp.SKPaint
+                        using var small_text_paint_white = new SKPaint
                         {
-                            Color = SkiaSharp.SKColor.Parse("#ffffff"),
+                            Color = SKColor.Parse("#ffffff"),
                             IsStroke = false,
                             TextSize = 10f,
                             IsAntialias = true,
-                            TextAlign = SkiaSharp.SKTextAlign.Center
+                            TextAlign = SKTextAlign.Center
                         };
 
-                        using var small_text_paint_bold = new SkiaSharp.SKPaint
+                        using var small_text_paint_bold = new SKPaint
                         {
-                            Color = SkiaSharp.SKColor.Parse("#222222"),
+                            Color = SKColor.Parse("#222222"),
                             IsStroke = false,
                             TextSize = 10f,
                             IsAntialias = true,
                             FakeBoldText = true,
-                            TextAlign = SkiaSharp.SKTextAlign.Center
+                            TextAlign = SKTextAlign.Center
                         };
 
                         // Put the title and date/time at the top of the document.
@@ -95,9 +99,9 @@ namespace Beader.Controllers {
                         var dict = new Dictionary<string, int>();
                         foreach (var color in data.beads) {
                             // Create a new paint for each bead.  This could be optimized by creating a dictionary keyed on color, but it doesn't seem necessary for my purposes.  Not exactly sure how the lifetime would work.
-                            using var paint = new SkiaSharp.SKPaint
+                            using var paint = new SKPaint
                             {
-                                Color = SkiaSharp.SKColor.Parse(color),
+                                Color = SKColor.Parse(color),
                                 IsStroke = false,
                                 StrokeWidth = STROKE,
                                 IsAntialias = true
@@ -153,9 +157,9 @@ namespace Beader.Controllers {
                                 y = (idx * RADIUS * 3) + (RADIUS * 1.5f);
                             }
 
-                            using var paint = new SkiaSharp.SKPaint
+                            using var paint = new SKPaint
                             {
-                                Color = SkiaSharp.SKColor.Parse(color),
+                                Color = SKColor.Parse(color),
                                 IsStroke = false,
                                 StrokeWidth = STROKE,
                                 IsAntialias = true
@@ -169,13 +173,42 @@ namespace Beader.Controllers {
 
                             idx++;
                         }
+
+                        bool watermark = false;
+                        if (watermark) {
+                            using var paint = new SKPaint()
+                            {
+                                Color = SKColor.Parse("#0C0"),
+                                TextSize = 20,
+                                FakeBoldText = true,
+                                IsAntialias = true,
+                                BlendMode = SKBlendMode.Plus,
+                                IsStroke = false
+                            };
+
+                            int count = 10;
+                            for (int q = 0; q < count; q++) {
+                                var minY = (q / (float)count) * size.Height;
+                                var maxY = ((q + 1) / (float)count) * size.Height;
+
+                                var minX = 0f;
+                                var maxX = size.Width - 260; // 260 is the width of the text.
+
+                                var x = (rnd.NextDouble() * (maxX - minX)) + minX;
+                                var y = (rnd.NextDouble() * (maxY - minY)) + minY;
+
+                                var offset = new SKPoint((float)x, (float)y);
+
+                                canvas.DrawText("Created with https://beader.art.", offset, paint);
+                            }
+                        }
                     });
                 });
             }).WithMetadata(new DocumentMetadata()
             {
                 Title = "Pearler Bead Layout",
                 Author = "",
-                Creator = "Perler Bead Generator - https://beader.azurewebsites.net",
+                Creator = "Perler Bead Generator - https://beader.art",
                 CreationDate = DateTime.Now,
                 Producer = "QuestPDF"
             }).GeneratePdf(ms);
