@@ -1,0 +1,10 @@
+﻿html { font-family: 'Open Sans', sans-serif; font-size:0.9rem; }
+body { display: flex; flex-direction: column; padding: 0px; margin: 0px; }
+
+header { display: flex; justify-content: space-between; align-items: center; font-size: 1.5rem; padding: 4px 10px; background-color: #124886; color: #FFF; }
+header a { color: #FFF; text-decoration:none; }
+
+footer { background: rgb(18,72,134); background: linear-gradient(0deg, rgba(28,82,144,1) 10%, rgba(18,72,134,1) 50%); color: #FAFAFA; font-size: 1rem; padding: 10px }
+footer p { margin-block-start: 0.5em; margin-block-end: 0.5em; }
+footer p.lead { font-size: 1.2rem; }
+footer a { color: #FFF; }

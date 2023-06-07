@@ -8,222 +8,221 @@ using QuestPDF.Infrastructure;
 using SkiaSharp;
 
 namespace Beader.Controllers {
-    [ApiController]
-    [Route("[controller]")]
-    public class GenerateController : ControllerBase {
+   [ApiController]
+   [Route("[controller]")]
+   public class GenerateController : ControllerBase {
 
-        private Random rnd = Random.Shared;
+      public GenerateController() { }
 
-        public GenerateController() { }
+      /// <summary>Generates a PDF document with the provided Perler bead layout.</summary>
+      /// <returns></returns>
+      [HttpPost]
+      public async Task<ActionResult> Get() {
+         // The HTTP body is being submitted as application/x-www-formurlencoded so we can't use ASP.NET built-in deserialization.
+         // However, the body is a JSON document, so deserialize it manually.
+         var form = await HttpContext.Request.ReadFormAsync();
+         var formData = form["data"];
+         var data = System.Text.Json.JsonSerializer.Deserialize<Data>(formData)!;
 
-        /// <summary>Generates a PDF document with the provided Perler bead layout.</summary>
-        /// <returns></returns>
-        [HttpPost]
-        public async Task<ActionResult> Get() {
-            // The HTTP body is being submitted as application/x-www-formurlencoded so we can't use ASP.NET built-in deserialization.
-            // However, the body is a JSON document, so deserialize it manually.
-            var form = await HttpContext.Request.ReadFormAsync();
-            var formData = form["data"];
-            var data = System.Text.Json.JsonSerializer.Deserialize<Data>(formData)!;
+         // These values were determine through trial and error.
+         const float RADIUS = 7.08f;
+         const float STROKE = 0.3f;
 
-            // These values were determine through trial and error.
-            const float RADIUS = 7.08f;
-            const float STROKE = 0.3f;
+         // Use whatever width the client specifies.  If the width is LTE 40 then use portrait aspect ratio, otherwise use landscape.
+         int COLS = data.width;
+         float width;
+         float height;
+         if (COLS <= 40) {
+            width = 8.5f;
+            height = 11f;
+         } else {
+            width = 11f;
+            height = 8.5f;
+         }
 
-            // Use whatever width the client specifies.  If the width is LTE 40 then use portrait aspect ratio, otherwise use landscape.
-            int COLS = data.width;
-            float width;
-            float height;
-            if (COLS <= 40) {
-                width = 8.5f;
-                height = 11f;
-            } else {
-                width = 11f;
-                height = 8.5f;
-            }
+         var ms = new MemoryStream();
 
-            var ms = new MemoryStream();
+         Document.Create(document => {
+            document.Page(page => {
+               page.Margin(25);
+               page.MarginTop(30);
 
-            Document.Create(document => {
-                document.Page(page => {
-                    page.Margin(25);
-                    page.MarginTop(30);
+               page.Size(new PageSize(width, height, Unit.Inch));
 
-                    page.Size(new PageSize(width, height, Unit.Inch));
+               page.Content().Container().Canvas((canvas, size) => {
+                  // Pre-create standard brushes.
+                  using var empty_circle = new SKPaint
+                  {
+                     Color = SKColor.Parse("#000000"),
+                     IsStroke = true,
+                     StrokeWidth = STROKE,
+                     IsAntialias = true
+                  };
 
-                    page.Content().Container().Canvas((canvas, size) => {
-                        // Pre-create standard brushes.
-                        using var empty_circle = new SKPaint
-                        {
-                            Color = SKColor.Parse("#000000"),
-                            IsStroke = true,
-                            StrokeWidth = STROKE,
-                            IsAntialias = true
-                        };
+                  using var text_paint = new SKPaint
+                  {
+                     Color = SKColor.Parse("#000000"),
+                     IsStroke = false,
+                     TextSize = 14,
+                     IsAntialias = true
+                  };
 
-                        using var text_paint = new SKPaint
-                        {
-                            Color = SKColor.Parse("#000000"),
-                            IsStroke = false,
-                            TextSize = 14,
-                            IsAntialias = true
-                        };
+                  using var small_text_paint_white = new SKPaint
+                  {
+                     Color = SKColor.Parse("#ffffff"),
+                     IsStroke = false,
+                     TextSize = 10f,
+                     IsAntialias = true,
+                     TextAlign = SKTextAlign.Center
+                  };
 
-                        using var small_text_paint_white = new SKPaint
-                        {
-                            Color = SKColor.Parse("#ffffff"),
-                            IsStroke = false,
-                            TextSize = 10f,
-                            IsAntialias = true,
-                            TextAlign = SKTextAlign.Center
-                        };
+                  using var small_text_paint_bold = new SKPaint
+                  {
+                     Color = SKColor.Parse("#222222"),
+                     IsStroke = false,
+                     TextSize = 10f,
+                     IsAntialias = true,
+                     FakeBoldText = true,
+                     TextAlign = SKTextAlign.Center
+                  };
 
-                        using var small_text_paint_bold = new SKPaint
-                        {
-                            Color = SKColor.Parse("#222222"),
-                            IsStroke = false,
-                            TextSize = 10f,
-                            IsAntialias = true,
-                            FakeBoldText = true,
-                            TextAlign = SKTextAlign.Center
-                        };
+                  // Put the title and date/time at the top of the document.
+                  canvas.DrawText(data.title ?? "", 0, -10, text_paint);
+                  string rightHeaderText = data.right_title ?? "";
+                  float rightHeaderTextWidth = text_paint.MeasureText(rightHeaderText);
+                  canvas.DrawText(rightHeaderText, size.Width - rightHeaderTextWidth, -10, text_paint);
 
-                        // Put the title and date/time at the top of the document.
-                        canvas.DrawText(data.title ?? "", 0, -10, text_paint);
-                        string rightHeaderText = data.right_title ?? "";
-                        float rightHeaderTextWidth = text_paint.MeasureText(rightHeaderText);
-                        canvas.DrawText(rightHeaderText, size.Width - rightHeaderTextWidth, -10, text_paint);
+                  int i = 0;
+                  int j = 0;
+                  var dict = new Dictionary<string, int>();
+                  foreach (var color in data.beads) {
+                     // Create a new paint for each bead.  This could be optimized by creating a dictionary keyed on color, but it doesn't seem necessary for my purposes.  Not exactly sure how the lifetime would work.
+                     using var paint = new SKPaint
+                     {
+                        Color = SKColor.Parse(color),
+                        IsStroke = false,
+                        StrokeWidth = STROKE,
+                        IsAntialias = true
+                     };
 
-                        int i = 0;
-                        int j = 0;
-                        var dict = new Dictionary<string, int>();
-                        foreach (var color in data.beads) {
-                            // Create a new paint for each bead.  This could be optimized by creating a dictionary keyed on color, but it doesn't seem necessary for my purposes.  Not exactly sure how the lifetime would work.
-                            using var paint = new SKPaint
-                            {
-                                Color = SKColor.Parse(color),
-                                IsStroke = false,
-                                StrokeWidth = STROKE,
-                                IsAntialias = true
-                            };
+                     float cx = i * RADIUS * 2;
+                     float cy = j * RADIUS * 2;
+                     cx += RADIUS;
+                     cy += RADIUS;
 
-                            float cx = i * RADIUS * 2;
-                            float cy = j * RADIUS * 2;
-                            cx += RADIUS;
-                            cy += RADIUS;
+                     canvas.DrawCircle(cx, cy, RADIUS, paint);
 
-                            canvas.DrawCircle(cx, cy, RADIUS, paint);
+                     if (String.Equals(color, "#ffffff", StringComparison.OrdinalIgnoreCase)) {
+                        // Black circle around every location.
+                        // Only if the location is empty.
+                        canvas.DrawCircle(cx, cy, RADIUS, empty_circle);
+                     }
 
-                            if (String.Equals(color, "#ffffff", StringComparison.OrdinalIgnoreCase)) {
-                                // Black circle around every location.
-                                // Only if the location is empty.
-                                canvas.DrawCircle(cx, cy, RADIUS, empty_circle);
-                            }
+                     i++;
+                     if (i == COLS) {
+                        // Once we draw all the columns, go to the next line.
+                        i = 0;
+                        j++;
+                     }
 
-                            i++;
-                            if (i == COLS) {
-                                // Once we draw all the columns, go to the next line.
-                                i = 0;
-                                j++;
-                            }
+                     if (dict.ContainsKey(color)) {
+                        dict[color]++;
+                     } else {
+                        dict[color] = 1;
+                     }
+                  }
 
-                            if (dict.ContainsKey(color)) {
-                                dict[color]++;
-                            } else {
-                                dict[color] = 1;
-                            }
-                        }
+                  // 2 - Sort by count.
+                  var list = new List<(string color, int count)>();
+                  foreach (var (color, count) in dict) {
+                     if (String.Equals(color, "#ffffff", StringComparison.OrdinalIgnoreCase)) continue;
+                     list.Add((color, count));
+                  }
 
-                        // 2 - Sort by count.
-                        var list = new List<(string color, int count)>();
-                        foreach (var (color, count) in dict) {
-                            if (String.Equals(color, "#ffffff", StringComparison.OrdinalIgnoreCase)) continue;
-                            list.Add((color, count));
-                        }
+                  var ordered = list.OrderByDescending(x => x.count).Take(25);
 
-                        var ordered = list.OrderByDescending(x => x.count).Take(25);
+                  int idx = 0;
+                  var gridWidth = RADIUS * 2 * COLS;
+                  var gridHeight = (RADIUS * 2 * data.height) + 2;
+                  foreach (var (color, count) in ordered) {
+                     float x = 0, y = 0;
 
-                        int idx = 0;
-                        var gridWidth = RADIUS * 2 * COLS;
-                        var gridHeight = (RADIUS * 2 * data.height) + 2;
-                        foreach (var (color, count) in ordered) {
-                            float x = 0, y = 0;
+                     if (data.height > data.width) {
+                        x = (idx * RADIUS * 3) + (RADIUS * 1.5f);
+                        y = gridHeight + (RADIUS) + 4;
+                     } else {
+                        x = gridWidth + (RADIUS) + 8;
+                        y = (idx * RADIUS * 3) + (RADIUS * 1.5f);
+                     }
 
-                            if (data.height > data.width) {
-                                x = (idx * RADIUS * 3) + (RADIUS * 1.5f);
-                                y = gridHeight + (RADIUS) + 4;
-                            } else {
-                                x = gridWidth + (RADIUS) + 8;
-                                y = (idx * RADIUS * 3) + (RADIUS * 1.5f);
-                            }
+                     using var paint = new SKPaint
+                     {
+                        Color = SKColor.Parse(color),
+                        IsStroke = false,
+                        StrokeWidth = STROKE,
+                        IsAntialias = true
+                     };
 
-                            using var paint = new SKPaint
-                            {
-                                Color = SKColor.Parse(color),
-                                IsStroke = false,
-                                StrokeWidth = STROKE,
-                                IsAntialias = true
-                            };
+                     canvas.DrawCircle(x, y, RADIUS * 1.5f, paint);
 
-                            canvas.DrawCircle(x, y, RADIUS * 1.5f, paint);
+                     var text = count.ToString();
+                     canvas.DrawText(text, x - 0.5f, y + 4.5f, small_text_paint_bold);
+                     canvas.DrawText(text, x, y + 4f, small_text_paint_white);
 
-                            var text = count.ToString();
-                            canvas.DrawText(text, x - 0.5f, y + 4.5f, small_text_paint_bold);
-                            canvas.DrawText(text, x, y + 4f, small_text_paint_white);
+                     idx++;
+                  }
 
-                            idx++;
-                        }
+                  bool watermark = !(HttpContext.User.Identity?.IsAuthenticated ?? false);
+                  watermark = false;
+                  if (watermark) {
+                     using var paint = new SKPaint()
+                     {
+                        Color = SKColor.Parse("#0C0"),
+                        TextSize = 20,
+                        FakeBoldText = true,
+                        IsAntialias = true,
+                        BlendMode = SKBlendMode.Plus,
+                        IsStroke = false
+                     };
 
-                        bool watermark = false;
-                        if (watermark) {
-                            using var paint = new SKPaint()
-                            {
-                                Color = SKColor.Parse("#0C0"),
-                                TextSize = 20,
-                                FakeBoldText = true,
-                                IsAntialias = true,
-                                BlendMode = SKBlendMode.Plus,
-                                IsStroke = false
-                            };
+                     int count = 10;
+                     for (int q = 0; q < count; q++) {
+                        var minY = (q / (float)count) * size.Height;
+                        var maxY = ((q + 1) / (float)count) * size.Height;
 
-                            int count = 10;
-                            for (int q = 0; q < count; q++) {
-                                var minY = (q / (float)count) * size.Height;
-                                var maxY = ((q + 1) / (float)count) * size.Height;
+                        var minX = 0f;
+                        var maxX = size.Width - 260; // 260 is the width of the text.
 
-                                var minX = 0f;
-                                var maxX = size.Width - 260; // 260 is the width of the text.
+                        var x = (Random.Shared.NextDouble() * (maxX - minX)) + minX;
+                        var y = (Random.Shared.NextDouble() * (maxY - minY)) + minY;
 
-                                var x = (rnd.NextDouble() * (maxX - minX)) + minX;
-                                var y = (rnd.NextDouble() * (maxY - minY)) + minY;
+                        var offset = new SKPoint((float)x, (float)y);
 
-                                var offset = new SKPoint((float)x, (float)y);
+                        canvas.DrawText("Created with https://beader.art.", offset, paint);
+                     }
+                  }
+               });
+            });
+         }).WithMetadata(new DocumentMetadata()
+         {
+            Title = "Pearler Bead Layout",
+            Author = "",
+            Creator = "Perler Bead Generator - https://beader.art",
+            CreationDate = DateTime.Now,
+            Producer = "QuestPDF"
+         }).GeneratePdf(ms);
 
-                                canvas.DrawText("Created with https://beader.art.", offset, paint);
-                            }
-                        }
-                    });
-                });
-            }).WithMetadata(new DocumentMetadata()
-            {
-                Title = "Pearler Bead Layout",
-                Author = "",
-                Creator = "Perler Bead Generator - https://beader.art",
-                CreationDate = DateTime.Now,
-                Producer = "QuestPDF"
-            }).GeneratePdf(ms);
+         ms.Position = 0;
 
-            ms.Position = 0;
+         return File(ms, "application/pdf");
+      }
 
-            return File(ms, "application/pdf");
-        }
-
-        private record Data {
-            public string? title { get; init; }
-            public string? right_title { get; init; }
-            public int width { get; init; }
-            public int height { get; init; }
-            public IEnumerable<string> beads { get; init; } = default!;
-        }
-    }
+      private record Data {
+         public string? title { get; init; }
+         public string? right_title { get; init; }
+         public int width { get; init; }
+         public int height { get; init; }
+         public IEnumerable<string> beads { get; init; } = default!;
+      }
+   }
 }

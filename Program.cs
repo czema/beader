@@ -1,22 +1,47 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+
 namespace Beader {
-    public class Program {
-        public static void Main(string[] args) {
-            var builder = WebApplication.CreateBuilder(args);
+   public class Program {
+      public static void Main(string[] args) {
+         var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddControllers();
+         // Add services to the container.
+         builder.Services.AddAuthentication(options => {
+            options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+         })
+         .AddCookie(options => {
+            options.LoginPath = "/signin";
+            options.LogoutPath = "/signout";
+         })
+         .AddPaypal(cfg => {
+            
+            cfg.ClientId = "";
+            cfg.ClientSecret = "";
+            cfg.CallbackPath = "/auth/callback";
+            cfg.Scope.Clear();
+            cfg.Scope.Add("openid");
+            cfg.Scope.Add("profile");
+            cfg.CorrelationCookie.SameSite = SameSiteMode.Lax;
 
-            var app = builder.Build();
+            // Sandbox.
+            if (true) {
+               cfg.AuthorizationEndpoint = "https://www.sandbox.paypal.com/webapps/auth/protocol/openidconnect/v1/authorize";
+               cfg.TokenEndpoint = "https://api.sandbox.paypal.com/v1/identity/openidconnect/tokenservice";
+               cfg.UserInformationEndpoint = "https://api.sandbox.paypal.com/v1/identity/oauth2/userinfo";
+            }
+         });
 
-            // Configure the HTTP request pipeline.
-            app.UseDefaultFiles(new DefaultFilesOptions() {
-                DefaultFileNames = new[] { "default.html" }
-            });
+         builder.Services.AddControllersWithViews();
 
-            app.UseStaticFiles();
-            app.MapControllers();
+         var app = builder.Build();
 
-            app.Run();
-        }
-    }
+         // Configure the HTTP request pipeline.
+         app.UseStaticFiles();
+         app.UseAuthentication();
+         app.UseAuthorization();
+         app.MapControllers();
+
+         app.Run();
+      }
+   }
 }

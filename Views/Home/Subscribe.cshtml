@@ -1,0 +1,43 @@
+﻿
+<div id="paypal-button-container"></div>
+<!-- Sample PayPal credentials (client-id) are included -->
+<script src="https://www.paypal.com/sdk/js?client-id=AakNcHEj_Sl_EVAc61dgJqZsIz_chXIVYIQ2IIQFJZu2JQXV4qa9O_Ea5TtkVRn5a38kz8FQCcs-52xK&currency=USD&vault=true&intent=subscription&enable-funding=venmo" data-sdk-integration-source="integrationbuilder"></script>
+
+<script>
+   const paypalButtonsComponent = paypal.Buttons({
+       // optional styling for buttons
+       // https://developer.paypal.com/docs/checkout/standard/customize/buttons-style-guide/
+       style: {
+           color: "gold",
+           shape: "rect",
+           height: 40,
+           label: "subscribe",
+           layout: "vertical"
+       },
+
+       // set up the recurring transaction
+       createSubscription: (data, actions) => {
+           // replace with your subscription plan id
+           // https://developer.paypal.com/docs/subscriptions/#link-createplan
+           return actions.subscription.create({
+               plan_id: "P-3RX065706M3469222L5IFM4I"
+           });
+       },
+
+       // notify the buyer that the subscription is successful
+       onApprove: (data, actions) => {
+           console.log('You have successfully created subscription.');
+       },
+
+       // handle unrecoverable errors
+       onError: (err) => {
+           console.error('An error prevented the buyer from checking out with PayPal.');
+       }
+   });
+
+   paypalButtonsComponent
+       .render("#paypal-button-container")
+       .catch((err) => {
+           console.error('PayPal Buttons failed to render.');
+       });
+</script>

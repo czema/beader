@@ -1,0 +1,48 @@
+﻿@model Beader.Models.LayoutModel
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="utf-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+   <title>Beader.art | @ViewData["Title"]</title>
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+
+   <link href="/assets/fontawesome/css/fontawesome.min.css" rel="stylesheet">
+   <link href="/assets/fontawesome/css/solid.min.css" rel="stylesheet">
+   <link href="/assets/css/site.css" rel="stylesheet" />
+   @RenderSection("Stylesheets", required: false)
+</head>
+<body>
+   <header>
+      <a href="/">Beader</a>
+
+      <div style="font-size:1.1rem;">
+         @if (string.IsNullOrEmpty(Model.Name)) {
+            <a href="~/SignIn" onclick="autoSave && autoSave();" title="Sign In"><i class="fa-solid fa-sign-in"></i></a>
+         } else {
+            @Model.Name
+            <a href="~/SignOut" onclick="autoSave && autoSave();" title="Sign Out"><i class="fa-solid fa-sign-out"></i></a>
+         }
+      </div>
+
+   </header>
+
+   @RenderBody()
+
+   <footer>
+      <p class="lead">Beader.art &copy; Echo Media</p>
+      <p>Produce your own Pearler&trade; bead artwork templates.</p>
+      <p>Log in with Paypal and subscribe for $1/month to remove the watermark.</p>
+      <p><a href="~/Privacy">Privacy Policy</a> | <a href="~/UserAgreement">User Agreement</a></p>
+   </footer>
+
+   @RenderSection("Scripts", required: false)
+</body>
+</html>
