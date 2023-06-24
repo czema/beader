@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 namespace Beader {
    public class Program {
       public static void Main(string[] args) {
+         QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community; // Closed-source software with less than $1M revenue per year.
+
          var builder = WebApplication.CreateBuilder(args);
 
          // Add services to the container.
@@ -14,7 +16,6 @@ namespace Beader {
             options.LogoutPath = "/signout";
          })
          .AddPaypal(cfg => {
-            
             cfg.ClientId = "";
             cfg.ClientSecret = "";
             cfg.CallbackPath = "/auth/callback";
@@ -36,6 +37,7 @@ namespace Beader {
          var app = builder.Build();
 
          // Configure the HTTP request pipeline.
+         app.UseDeveloperExceptionPage();
          app.UseStaticFiles();
          app.UseAuthentication();
          app.UseAuthorization();

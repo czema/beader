@@ -239,9 +239,9 @@
       // Beads.
       ctx.globalAlpha = 1;
       ui.beadLocations = [];
-      for (let j = 0; j < data.height; j++) {
+      for (let j = ui.skip; j < data.height; j++) {
          for (let i = 0; i < data.width; i++) {
-            const idx = ((j + ui.skip) * data.width) + i;
+            const idx = (j * data.width) + i;
             const cell = data.beads[idx];
 
             if (ui.legendActive) {
@@ -252,7 +252,7 @@
             }
 
             const x = (i * beadSize) + (beadSize / 2) + marginSize;
-            const y = (j * beadSize) + (beadSize / 2) + 1 + marginSize;
+            const y = ((j - ui.skip) * beadSize) + (beadSize / 2) + 1 + marginSize;
 
             ui.beadLocations.push({ x: x, y: y, radius: beadSize / 2, idx: idx });
 
@@ -527,7 +527,7 @@
 
          } else if (event.deltaY > 0) {
             ui.skip++;
-            if (ui.skip > 40) ui.skip = 40;
+            if (ui.skip > 50) ui.skip = 50;
          }
       }
       event.preventDefault();
