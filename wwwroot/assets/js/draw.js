@@ -539,8 +539,8 @@
    window.addEventListener('mouseup', mouseUp);
    window.addEventListener('touchend', mouseUp);
    canvas.addEventListener('wheel', wheel);
-   canvas.addEventListener('mousemove', mouseMove);
-   canvas.addEventListener('touchmove', mouseMove);
+   canvas.addEventListener('mousemove', mouseMove, { passive: true });
+   canvas.addEventListener('touchmove', mouseMove, { passive: true });
 
    // Serialize the data and store in local storage.
    const autoSave = () => {
